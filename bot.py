@@ -61,10 +61,10 @@ log = logging.getLogger("vidox")
 # =====================================================================
 #  SETTINGS YOU CAN EDIT (not secrets) - edit here, then redeploy
 # =====================================================================
-STORAGE_CHANNEL_ID = -1004393649649          # private channel the admins upload videos to
-BOT_USERNAME = "vdox_1_bot"                   # without @ (used for referral links)
+STORAGE_CHANNEL_ID = -1003936270194          # private channel the admins upload videos to
+BOT_USERNAME = "vdox_2_bot"                   # without @ (used for referral links)
 
-ADMIN_IDS = {8756597265, 6043858925}          # more admins can be added here (any number)
+ADMIN_IDS = {8902791537, 6043858925}          # more admins can be added here (any number)
 
 # channels for the optional "join and get a gift" step
 SUB_CHANNELS = [
