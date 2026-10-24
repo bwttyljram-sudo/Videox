@@ -64,6 +64,19 @@ h1{margin:0;font-size:24px;font-weight:800}
 .v .info span{font-size:12px;color:var(--muted)}
 .sendbtn{width:38px;height:38px;flex:none;border-radius:50%;border:none;background:linear-gradient(135deg,var(--gold2),var(--gold3));display:flex;align-items:center;justify-content:center}
 .lock{color:var(--dim);flex:none}
+.gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 10px;padding:0 18px}
+.vc{background:none;border:none;padding:0;color:var(--text);text-align:start;display:flex;flex-direction:column;gap:6px;min-width:0}
+.vc[disabled]{opacity:.6}
+.gt{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#2B2B2F,#121214);display:flex;align-items:center;justify-content:center}
+.gt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gt .ph{position:relative;display:flex}
+.gd{position:absolute;bottom:5px;inset-inline-start:5px;background:rgba(11,11,12,.78);color:#F4F1EA;font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px}
+.gn{position:absolute;top:5px;inset-inline-start:5px;background:rgba(11,11,12,.6);font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px}
+.gs{position:absolute;top:5px;inset-inline-end:5px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold3));display:flex;align-items:center;justify-content:center}
+.gs svg{width:12px;height:12px}
+.gl{position:absolute;inset:0;background:rgba(11,11,12,.35);display:flex;align-items:center;justify-content:center;color:#E8E4DA}
+.gtt{font-size:12px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm{font-size:11px;color:var(--muted);margin-top:-2px}
 .cta{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:44px 18px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 62%,rgba(11,11,12,0));display:flex;flex-direction:column;align-items:center;gap:10px}
 .cta .in{width:100%;max-width:484px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .btn{width:100%;height:56px;border:none;border-radius:18px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--gold2),var(--gold) 45%,var(--gold3));color:var(--ink);font-size:17px;font-weight:800}
@@ -282,15 +295,17 @@ function drawPackage(justBought){
   h+='<div class="hero">'+(cover?'<img src="'+esc(cover)+'" alt="">':'')+'<span class="play">'+ICON.play2+'</span></div>';
   h+='<div class="head"><h1 style="font-size:22px">'+esc(p.title)+'</h1>'+(p.description?'<span class="sub">'+esc(p.description)+'</span>':'')+'</div>';
   h+='<div class="chips" style="padding-top:0"><span class="chip">'+ICON.film+esc(T('videos',{n:p.videos.length}))+'</span><span class="chip">'+ICON.disk+fmtSize(totalSize)+'</span>'+(totalDur?'<span class="chip">'+ICON.clock+esc(fmtTotal(totalDur))+'</span>':'')+'</div>';
-  h+='<div class="sec"><h2>'+esc(T('videos_h'))+'</h2><span class="sub">'+(p.owned?esc(T('tap_send')):esc(T('locked')))+'</span></div><div class="vids">';
+  h+='<div class="sec"><h2>'+esc(T('videos_h'))+'</h2><span class="sub">'+(p.owned?esc(T('tap_send')):esc(T('locked')))+'</span></div><div class="gal">';
   p.videos.forEach(function(v){
-    h+='<div class="v"><div class="th">'+(v.thumb?'<img loading="lazy" src="'+esc(v.thumb)+'" alt="">':'')+ICON.play+'<span class="n">'+v.n+'</span></div>'+
-       '<div class="info"><b>'+esc(v.title||('#'+v.n))+'</b><span>'+(v.duration?'⏱ '+fmtDur(v.duration)+' • ':'')+'💾 '+fmtSize(v.size)+'</span></div>'+
-       (p.owned?'<button class="sendbtn" data-vid="'+v.id+'" aria-label="send">'+ICON.send+'</button>':ICON.lock)+'</div>';
+    var inner='<div class="gt">'+(v.thumb?'<img loading="lazy" src="'+esc(v.thumb)+'" alt="">':'<span class="ph">'+ICON.play+'</span>')+
+      '<span class="gn">'+v.n+'</span>'+(v.duration?'<span class="gd">'+fmtDur(v.duration)+'</span>':'')+
+      (p.owned?'<span class="gs">'+ICON.send+'</span>':'<span class="gl">'+ICON.lock+'</span>')+'</div>'+
+      '<div class="gtt">'+esc(v.title||('#'+v.n))+'</div><div class="gm">'+fmtSize(v.size)+'</div>';
+    h+= p.owned ? '<button class="vc own" data-vid="'+v.id+'">'+inner+'</button>' : '<div class="vc">'+inner+'</div>';
   });
   h+='</div>';
   c.innerHTML=h;
-  Array.prototype.forEach.call(c.querySelectorAll('.sendbtn'),function(b){ b.onclick=function(){ sendVideo(+b.dataset.vid,b); }; });
+  Array.prototype.forEach.call(c.querySelectorAll('.vc.own'),function(b){ b.onclick=function(){ sendVideo(+b.dataset.vid,b); }; });
 
   if(p.maintenance){ cta.innerHTML=''; return; }
   if(p.owned){
@@ -376,4 +391,5 @@ boot();
 </script>
 </body>
 </html>
+
 
