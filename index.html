@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Vidox</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0B0C;--card:#141416;--line:#26262a;--tx:#F3F3F4;--mut:#9a9aa2;--gold:#E8A530;--gold2:#F2B84B;--gold3:#C27A10;--green:#22c55e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Tajawal,system-ui,sans-serif;padding:0 14px 90px}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 80%,transparent);padding:14px 0 10px;text-align:center}
+h1{margin:0;font-size:22px;font-weight:800;color:var(--gold2)}
+.sub{font-size:12px;color:var(--mut);margin-top:2px}
+.note{background:#1a1608;border:1px solid #3a2f10;color:#e9d9a8;border-radius:12px;padding:10px 12px;font-size:12.5px;margin:6px 0 14px;line-height:1.6}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-bottom:16px}
+.card.own{border-color:var(--gold);animation:glow 2.2s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(232,165,48,.55)}50%{box-shadow:0 0 0 7px rgba(232,165,48,0)}}
+.cover{width:100%;height:190px;object-fit:cover;display:block;background:#1d1d20}
+.nocover{height:190px;display:flex;align-items:center;justify-content:center;font-size:54px;background:linear-gradient(135deg,#1d1d20,#2a2110)}
+.bubble{position:absolute;top:150px;left:50%;transform:translateX(-50%);background:var(--green);color:#04210f;font-weight:800;border:0;border-radius:999px;padding:9px 26px;font-family:inherit;font-size:15px;animation:pulse 1.6s infinite;box-shadow:0 4px 18px rgba(34,197,94,.5)}
+@keyframes pulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.09)}}
+.body{padding:26px 14px 14px}
+.name{font-size:17px;font-weight:800}
+.desc{font-size:13px;color:var(--mut);margin:6px 0 10px;line-height:1.6}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;margin-bottom:12px}
+.chip{background:#1d1d20;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.chip.p{color:var(--gold2);border-color:#4a3a12;font-weight:700}
+.btn{width:100%;border:0;border-radius:12px;padding:12px;font-family:inherit;font-weight:700;font-size:15px;background:linear-gradient(135deg,var(--gold2),var(--gold3));color:#1a1100}
+.btn.sec{background:#1d1d20;color:var(--tx);border:1px solid var(--line)}
+.btn.buy{background:var(--green);color:#04210f;animation:pulse2 1.6s infinite;position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:14px;right:14px;width:auto;z-index:9;font-size:16px}
+@keyframes pulse2{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.th{position:relative;aspect-ratio:9/12;background:#1d1d20;border-radius:10px;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover}
+.th .d{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.7);border-radius:6px;padding:1px 6px;font-size:10px}
+.th .s{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);border-radius:6px;padding:1px 6px;font-size:10px}
+.empty{text-align:center;color:var(--mut);padding:40px 0}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#222;border:1px solid var(--line);padding:10px 16px;border-radius:12px;z-index:20;font-size:13px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header><h1>Vidox</h1><div class="sub" id="sub"></div></header>
+<div id="app"><div class="empty">⏳</div></div>
+<script>
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();
+const INIT=tg.initData;let ST={lang:'ar',channels:[]};let CUR=null;
+const T={ar:{sub:'قنوات تعليمية بنجوم تيليجرام ⭐',note:'ℹ️ القنوات مفتوحة: يمكنك تحويل المحتوى وحفظه. لا يوجد استرداد بعد الشراء.',buy:'شراء',content:'المحتوى',open:'فتح القناة',members:'عضو',items:'محتوى',star:'⭐',empty:'لا توجد قنوات حالياً',preparing:'رابط الدفع قيد التجهيز، حاول بعد قليل.',err:'حدث خطأ، حاول مجدداً.',back:'رجوع',noitems:'لم يُضف محتوى للمعاينة بعد.',trust:'دليل الثقة 🛡',free:'مجانية',paid:'تم الدفع ✅ سيصلك رابط الدخول في البوت خلال ثوانٍ.',cancel:'أُلغي الدفع.',fail:'فشل الدفع.'},
+en:{sub:'Educational channels, paid with Telegram Stars ⭐',note:'ℹ️ Channels are open: you can forward and save content. No refunds after purchase.',buy:'Buy',content:'Content',open:'Open channel',members:'members',items:'items',star:'⭐',empty:'No channels yet',preparing:'Payment link is being prepared, try again shortly.',err:'Something went wrong.',back:'Back',noitems:'No preview content yet.',trust:'Trust channel 🛡',free:'Free',paid:'Paid ✅ your join link is on its way in the bot.',cancel:'Payment cancelled.',fail:'Payment failed.'}};
+const tr=k=>(T[ST.lang]||T.ar)[k];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+async function api(p,b={}){const r=await fetch('/api/'+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:INIT,...b})});return r.json().catch(()=>({ok:false}))}
+function fdur(s){s=+s||0;const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`}
+function fsize(n){n=+n||0;return n>=1<<30?(n/(1<<30)).toFixed(1)+' GB':n>=1<<20?Math.round(n/(1<<20))+' MB':n?Math.max(1,Math.round(n/1024))+' KB':''}
+function openOwned(c){if(c.link)tg.openTelegramLink?tg.openTelegramLink(c.link):window.open(c.link)}
+async function buy(c){
+  if(c.invoice){return pay(c.invoice)}
+  const r=await api('buy',{id:c.id});
+  if(r.ok&&r.invoice)return pay(r.invoice);
+  toast(r.error==='preparing'?tr('preparing'):tr('err'))
+}
+function pay(url){
+  tg.openInvoice(url,st=>{if(st==='paid'){toast(tr('paid'));tg.HapticFeedback&&tg.HapticFeedback.notificationOccurred('success');setTimeout(()=>tg.close(),2500)}else if(st==='cancelled')toast(tr('cancel'));else if(st==='failed')toast(tr('fail'))})
+}
+function renderList(){
+  CUR=null;tg.BackButton.hide();$('#sub').textContent=tr('sub');
+  const el=$('#app');
+  if(!ST.channels.length){el.innerHTML=`<div class="empty">${tr('empty')}</div>`;return}
+  el.innerHTML=`<div class="note">${tr('note')}</div>`+ST.channels.map(c=>`
+  <div class="card ${c.owned?'own':''}" data-id="${c.id}">
+    ${c.cover?`<img class="cover" loading="lazy" src="/img/c/${c.id}.jpg">`:`<div class="nocover">🎬</div>`}
+    ${c.owned?'':`<button class="bubble" data-buy="${c.id}">${tr('buy')} ${c.price}${tr('star')}</button>`}
+    <div class="body"><div class="name">${esc(c.name)}</div><div class="desc">${esc(c.desc)}</div>
+    <div class="meta"><span class="chip">🎞 ${c.count} ${tr('items')}</span><span class="chip">👥 ${c.members} ${tr('members')}</span>
+    <span class="chip p">${c.price>0?c.price+' ⭐':tr('free')}</span></div>
+    <button class="btn sec" data-view="${c.id}">${tr('content')}</button></div></div>`).join('')+
+  (ST.trust?`<button class="btn sec" id="trust">${tr('trust')}</button>`:'');
+  el.querySelectorAll('[data-buy]').forEach(b=>b.onclick=e=>{e.stopPropagation();buy(ST.channels.find(c=>c.id==b.dataset.buy))});
+  el.querySelectorAll('[data-view]').forEach(b=>b.onclick=e=>{e.stopPropagation();showChannel(+b.dataset.view)});
+  el.querySelectorAll('.card.own').forEach(d=>d.onclick=()=>openOwned(ST.channels.find(c=>c.id==d.dataset.id)));
+  const t=$('#trust');if(t)t.onclick=()=>tg.openTelegramLink(ST.trust)
+}
+async function showChannel(id){
+  const c=ST.channels.find(x=>x.id==id);if(!c)return;CUR=id;
+  tg.BackButton.show();$('#sub').textContent=c.name;
+  $('#app').innerHTML='<div class="empty">⏳</div>';
+  const r=await api('channel',{id});const m=(r.ok&&r.media)||[];
+  $('#app').innerHTML=(m.length?`<div class="gal">${m.map(v=>`<div class="th"><img loading="lazy" src="/img/v/${v.id}.jpg" onerror="this.style.display='none'"><span class="d">${fdur(v.duration)}</span><span class="s">${fsize(v.size)}</span></div>`).join('')}</div>`:`<div class="empty">${tr('noitems')}</div>`)+
+  (c.owned?`<button class="btn buy" id="act" style="background:linear-gradient(135deg,var(--gold2),var(--gold3));color:#1a1100;animation:none">${tr('open')}</button>`:`<button class="btn buy" id="act">${tr('buy')} ${c.price} ${tr('star')}</button>`);
+  $('#act').onclick=()=>c.owned?openOwned(c):buy(c)
+}
+tg.BackButton.onClick(()=>renderList());
+(async()=>{
+  const r=await api('init');
+  if(!r.ok){$('#app').innerHTML=`<div class="empty">${r.error==='banned'?'🚫':r.error==='maintenance'?'🛠':'⚠️'}</div>`;return}
+  ST=r;if(r.brand){document.title=r.brand;$('h1').textContent=r.brand}document.documentElement.lang=r.lang;document.documentElement.dir=r.lang==='ar'?'rtl':'ltr';
+  renderList();
+  const q=new URLSearchParams(location.search).get('c')||new URLSearchParams(tg.initDataUnsafe.start_param?'c='+tg.initDataUnsafe.start_param.replace(/^c_?/,''):'').get('c');
+  if(q&&ST.channels.find(c=>c.id==q))showChannel(+q)
+})();
+</script>
+</body>
+</html>
