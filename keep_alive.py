@@ -126,13 +126,14 @@ async def api_init(request: web.Request) -> web.Response:
         "FROM channels c WHERE c.active = 1 ORDER BY c.pinned DESC, sales DESC, c.id")
     owned = {r["channel_id"] for r in await ctx.db._q(
         "SELECT channel_id FROM orders WHERE telegram_id = ? AND status = 'paid'", [uid])}
+    hot = {c["id"] for c in sorted((r for r in rows if r["sales"] > 0), key=lambda r: -r["sales"])[:3]}
     out = []
     for c in rows:
         own = c["id"] in owned or int(c["price_stars"]) <= 0
         out.append({"id": c["id"], "name": c["button_name"] or c["title"], "title": c["title"],
                     "desc": (c["custom_desc"] or c["description"] or "")[:400], "count": c["media_count"],
                     "members": c["members"], "price": c["price_stars"], "owned": own, "cover": bool(c["has_photo"]),
-                    "pinned": bool(c["pinned"]), "invoice": c["invoice_url"] if (ready(c) and not own) else None,
+                    "pinned": bool(c["pinned"]), "hot": bool(c["pinned"]) or (c["id"] in hot), "invoice": c["invoice_url"] if (ready(c) and not own) else None,
                     "link": c["join_link"] if own else None})
     return jok(lang=u.get("language", "ar"), channels=out, trust=ctx.trust_url(), support=ctx.support(),
                bot=ctx.bot_username, brand=ctx.brand(), accepted=bool(u.get("consent_at")))
@@ -220,8 +221,21 @@ async def alive(_r: web.Request) -> web.Response:
     return web.Response(text="Vidox is alive ✅")
 
 
+@web.middleware
+async def safe_mw(request: web.Request, handler: Any) -> web.StreamResponse:
+    try:
+        return await handler(request)
+    except web.HTTPException:
+        raise
+    except Exception as e:  # never leak a bare 500 to the Mini App
+        log.exception("web error on %s: %s", request.path, e)
+        if request.path.startswith("/api/"):
+            return jerr(500, "server", detail=str(e)[:120])
+        return web.Response(status=500, text="error")
+
+
 async def start_web(ctx: Ctx, port: int) -> web.AppRunner:
-    app = web.Application(client_max_size=1024 * 64)
+    app = web.Application(client_max_size=1024 * 64, middlewares=[safe_mw])
     app["ctx"] = ctx
     app.router.add_get("/", alive)
     app.router.add_get("/health", alive)
